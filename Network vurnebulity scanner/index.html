@@ -1,0 +1,2131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INVAT — Network Vulnerability Assessment Tool</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;600;800&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-void: #050708;
+            --bg-deep: #090c0f;
+            --bg-panel: #0d1117;
+            --bg-card: #111820;
+            --bg-elevated: #161e28;
+            --border-subtle: rgba(255, 255, 255, 0.04);
+            --border-dim: rgba(0, 255, 100, 0.12);
+            --border-glow: rgba(0, 255, 100, 0.3);
+            --neon-green: #00ff64;
+            --neon-green-dim: rgba(0, 255, 100, 0.15);
+            --neon-red: #ff2d55;
+            --neon-red-dim: rgba(255, 45, 85, 0.15);
+            --neon-yellow: #ffd60a;
+            --neon-yellow-dim: rgba(255, 214, 10, 0.15);
+            --neon-cyan: #00d4ff;
+            --text-primary: #e8f0ec;
+            --text-secondary: #6b8a78;
+            --text-dim: #3a5044;
+            --font-mono: 'Share Tech Mono', monospace;
+            --font-ui: 'Rajdhani', sans-serif;
+            --font-display: 'Exo 2', sans-serif;
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --shadow-panel: 0 4px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg-void);
+            color: var(--text-primary);
+            font-family: var(--font-ui);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 255, 100, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 100, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px,
+                    rgba(0, 0, 0, 0.08) 2px, rgba(0, 0, 0, 0.08) 4px);
+            pointer-events: none;
+            z-index: 0;
+            animation: scanlines 8s linear infinite;
+        }
+
+        @keyframes scanlines {
+            0% {
+                background-position: 0 0;
+            }
+
+            100% {
+                background-position: 0 100vh;
+            }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px 48px;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 28px 0 24px;
+            border-bottom: 1px solid var(--border-dim);
+            margin-bottom: 28px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            border: 1.5px solid var(--neon-green);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 0 16px rgba(0, 255, 100, 0.25), inset 0 0 12px rgba(0, 255, 100, 0.05);
+        }
+
+        .logo-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .header-tag {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            letter-spacing: 0.3em;
+            color: var(--neon-green);
+            opacity: 0.7;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        h1 {
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 22px;
+            letter-spacing: 0.05em;
+            line-height: 1;
+        }
+
+        h1 span {
+            color: var(--neon-green);
+        }
+
+        .header-subtitle {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-secondary);
+            letter-spacing: 0.2em;
+            margin-top: 3px;
+            text-transform: uppercase;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--neon-green);
+            box-shadow: 0 0 8px var(--neon-green);
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 8px var(--neon-green);
+            }
+
+            50% {
+                opacity: 0.5;
+                box-shadow: 0 0 4px var(--neon-green);
+            }
+        }
+
+        .sys-time {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 20px;
+        }
+
+        .left-col {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .right-col {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-dim);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow-panel);
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.3s;
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--neon-green), transparent);
+            opacity: 0.4;
+        }
+
+        .panel:hover {
+            border-color: var(--border-glow);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .panel-title {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 0.25em;
+            color: var(--neon-green);
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-title::before {
+            content: '//';
+            color: var(--text-dim);
+        }
+
+        .badge {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            padding: 2px 8px;
+            border-radius: 2px;
+            letter-spacing: 0.05em;
+            border: 1px solid;
+        }
+
+        .badge-green {
+            color: var(--neon-green);
+            background: var(--neon-green-dim);
+            border-color: rgba(0, 255, 100, 0.25);
+        }
+
+        .badge-yellow {
+            color: var(--neon-yellow);
+            background: var(--neon-yellow-dim);
+            border-color: rgba(255, 214, 10, 0.25);
+        }
+
+        .badge-red {
+            color: var(--neon-red);
+            background: var(--neon-red-dim);
+            border-color: rgba(255, 45, 85, 0.25);
+        }
+
+        .badge-cyan {
+            color: var(--neon-cyan);
+            background: rgba(0, 212, 255, 0.1);
+            border-color: rgba(0, 212, 255, 0.25);
+        }
+
+        .disclaimer {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            letter-spacing: 0.1em;
+            color: rgba(255, 214, 10, 0.65);
+            background: rgba(255, 214, 10, 0.05);
+            border: 1px solid rgba(255, 214, 10, 0.15);
+            border-radius: var(--radius-sm);
+            padding: 6px 12px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 200px auto;
+            gap: 12px;
+            align-items: end;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field-label {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            letter-spacing: 0.2em;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .field-input,
+        .field-select {
+            background: var(--bg-deep);
+            border: 1px solid rgba(0, 255, 100, 0.15);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            padding: 10px 14px;
+            outline: none;
+            transition: all 0.25s;
+            width: 100%;
+        }
+
+        .field-input::placeholder {
+            color: var(--text-dim);
+        }
+
+        .field-input:focus,
+        .field-select:focus {
+            border-color: var(--neon-green);
+            box-shadow: 0 0 0 2px rgba(0, 255, 100, 0.1);
+            background: var(--bg-panel);
+        }
+
+        .field-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2300ff64' stroke-width='1.5'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            cursor: pointer;
+        }
+
+        .field-select option {
+            background: var(--bg-deep);
+        }
+
+        .btn-scan {
+            background: transparent;
+            border: 1.5px solid var(--neon-green);
+            border-radius: var(--radius-sm);
+            color: var(--neon-green);
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 0.1em;
+            padding: 10px 24px;
+            cursor: pointer;
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+            white-space: nowrap;
+            transition: all 0.25s;
+            box-shadow: 0 0 16px rgba(0, 255, 100, 0.15), inset 0 0 16px rgba(0, 255, 100, 0.03);
+        }
+
+        .btn-scan::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--neon-green);
+            transform: translateX(-101%);
+            transition: transform 0.3s ease;
+            z-index: 0;
+        }
+
+        .btn-scan span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-scan:hover::before {
+            transform: translateX(0);
+        }
+
+        .btn-scan:hover {
+            color: #000;
+            box-shadow: 0 0 30px rgba(0, 255, 100, 0.4);
+        }
+
+        .btn-scan:active {
+            transform: scale(0.98);
+        }
+
+        .btn-scan:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .scan-status {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .scan-status.active {
+            display: flex;
+        }
+
+        .status-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .status-text {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--neon-green);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-pct {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .progress-track {
+            height: 3px;
+            background: var(--bg-deep);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--neon-green), #00ffaa);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 8px var(--neon-green);
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: -2px;
+            width: 6px;
+            height: 7px;
+            background: #fff;
+            border-radius: 2px;
+            box-shadow: 0 0 8px var(--neon-green);
+        }
+
+        .scan-log {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-dim);
+            line-height: 1.8;
+            max-height: 64px;
+            overflow: hidden;
+        }
+
+        .scan-log span {
+            display: block;
+            color: var(--text-secondary);
+        }
+
+        .scan-log span.new {
+            color: var(--neon-green);
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(4px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        .error-banner {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            margin-top: 12px;
+            padding: 10px 14px;
+            background: var(--neon-red-dim);
+            border: 1px solid rgba(255, 45, 85, 0.3);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--neon-red);
+        }
+
+        .error-banner.active {
+            display: flex;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .results-table th {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            padding: 8px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-subtle);
+            font-weight: 400;
+        }
+
+        .results-table td {
+            padding: 11px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            vertical-align: middle;
+            transition: background 0.2s;
+        }
+
+        .results-table tr:hover td {
+            background: rgba(0, 255, 100, 0.02);
+        }
+
+        .results-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .port-num {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--neon-cyan);
+        }
+
+        .service-name {
+            font-family: var(--font-ui);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .service-sub {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-dim);
+            margin-top: 1px;
+        }
+
+        /* ── OS column cell ── */
+        .os-text {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--neon-cyan);
+            line-height: 1.4;
+        }
+
+        .os-text.unknown {
+            color: var(--text-dim);
+        }
+
+        .state-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            padding: 3px 10px;
+            border-radius: 2px;
+            text-transform: uppercase;
+        }
+
+        .state-badge::before {
+            content: '';
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .state-badge.open {
+            color: var(--neon-green);
+            background: var(--neon-green-dim);
+            border: 1px solid rgba(0, 255, 100, 0.2);
+        }
+
+        .state-badge.filtered {
+            color: var(--neon-yellow);
+            background: var(--neon-yellow-dim);
+            border: 1px solid rgba(255, 214, 10, 0.2);
+        }
+
+        .state-badge.closed {
+            color: var(--text-dim);
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .risk-badge {
+            display: inline-flex;
+            align-items: center;
+            font-family: var(--font-display);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            padding: 3px 10px;
+            border-radius: 2px;
+            text-transform: uppercase;
+        }
+
+        .risk-badge.critical {
+            color: var(--neon-red);
+            background: var(--neon-red-dim);
+            border: 1px solid rgba(255, 45, 85, 0.2);
+        }
+
+        .risk-badge.high {
+            color: #ff6b35;
+            background: rgba(255, 107, 53, 0.1);
+            border: 1px solid rgba(255, 107, 53, 0.2);
+        }
+
+        .risk-badge.medium {
+            color: var(--neon-yellow);
+            background: var(--neon-yellow-dim);
+            border: 1px solid rgba(255, 214, 10, 0.2);
+        }
+
+        .risk-badge.low {
+            color: var(--neon-green);
+            background: var(--neon-green-dim);
+            border: 1px solid rgba(0, 255, 100, 0.2);
+        }
+
+        .rec-text {
+            font-family: var(--font-ui);
+            font-size: 12px;
+            color: var(--text-secondary);
+            max-width: 200px;
+            line-height: 1.4;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 24px;
+        }
+
+        .empty-icon {
+            font-size: 28px;
+            margin-bottom: 10px;
+            opacity: 0.2;
+        }
+
+        .empty-text {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-dim);
+            letter-spacing: 0.15em;
+        }
+
+        .skeleton-row td {
+            padding: 12px 14px;
+        }
+
+        .skeleton-cell {
+            height: 14px;
+            border-radius: 2px;
+            background: linear-gradient(90deg, var(--bg-deep) 25%, var(--bg-elevated) 50%, var(--bg-deep) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            to {
+                background-position: -200% 0;
+            }
+        }
+
+        .vuln-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .vuln-card {
+            background: var(--bg-deep);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.25s;
+        }
+
+        .vuln-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+        }
+
+        .vuln-card.critical::before {
+            background: var(--neon-red);
+            box-shadow: 0 0 8px var(--neon-red);
+        }
+
+        .vuln-card.high::before {
+            background: #ff6b35;
+        }
+
+        .vuln-card.medium::before {
+            background: var(--neon-yellow);
+        }
+
+        .vuln-card.low::before {
+            background: var(--neon-green);
+        }
+
+        .vuln-card:hover {
+            border-color: rgba(255, 255, 255, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .vuln-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            gap: 8px;
+        }
+
+        .vuln-title {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 13px;
+            line-height: 1.3;
+        }
+
+        .vuln-desc {
+            font-family: var(--font-ui);
+            font-size: 11px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-top: 4px;
+        }
+
+        .vuln-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            font-family: var(--font-mono);
+            font-size: 9px;
+            color: var(--text-dim);
+        }
+
+        .vuln-cve {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-subtle);
+            padding: 2px 6px;
+            border-radius: 2px;
+            letter-spacing: 0.05em;
+        }
+
+        .report-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-report {
+            flex: 1;
+            background: var(--bg-deep);
+            border: 1px solid rgba(0, 255, 100, 0.2);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            padding: 10px 16px;
+            cursor: pointer;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.25s;
+        }
+
+        .btn-report:hover {
+            border-color: var(--neon-green);
+            color: var(--neon-green);
+            background: var(--neon-green-dim);
+            box-shadow: 0 0 16px rgba(0, 255, 100, 0.1);
+        }
+
+        .btn-report.primary {
+            border-color: var(--neon-green);
+            color: var(--neon-green);
+            background: var(--neon-green-dim);
+        }
+
+        .btn-report.primary:hover {
+            background: rgba(0, 255, 100, 0.25);
+        }
+
+        .stat-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-dim);
+            border-radius: var(--radius-lg);
+            padding: 18px;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.3s;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--neon-green), transparent);
+            opacity: 0.3;
+        }
+
+        .stat-card:hover {
+            border-color: var(--border-glow);
+        }
+
+        .stat-label {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stat-label::before {
+            content: '//';
+        }
+
+        .risk-score-wrap {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .risk-score {
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 52px;
+            line-height: 1;
+            color: var(--neon-yellow);
+            text-shadow: 0 0 30px rgba(255, 214, 10, 0.3);
+            transition: all 0.5s;
+        }
+
+        .risk-score-unit {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            color: var(--text-dim);
+            padding-bottom: 4px;
+        }
+
+        .risk-label {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--neon-yellow);
+            margin-bottom: 10px;
+        }
+
+        .risk-bar-track {
+            height: 4px;
+            background: var(--bg-deep);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .risk-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--neon-green), var(--neon-yellow), var(--neon-red));
+            border-radius: 2px;
+            transition: width 0.8s ease;
+        }
+
+        .firewall-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .fw-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            background: var(--neon-green-dim);
+            border: 1px solid rgba(0, 255, 100, 0.2);
+            flex-shrink: 0;
+        }
+
+        .fw-text {
+            font-family: var(--font-display);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .fw-sub {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            color: var(--text-dim);
+            margin-top: 2px;
+            letter-spacing: 0.1em;
+        }
+
+        .port-breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .port-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-family: var(--font-mono);
+            font-size: 10px;
+        }
+
+        .port-row-label {
+            color: var(--text-secondary);
+        }
+
+        .port-row-val {
+            font-weight: 600;
+        }
+
+        .port-row-val.green {
+            color: var(--neon-green);
+        }
+
+        .port-row-val.yellow {
+            color: var(--neon-yellow);
+        }
+
+        .port-row-val.dim {
+            color: var(--text-dim);
+        }
+
+        .stat-value {
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 32px;
+            line-height: 1;
+        }
+
+        .stat-value.green {
+            color: var(--neon-green);
+            text-shadow: 0 0 20px rgba(0, 255, 100, 0.3);
+        }
+
+        .stat-sub {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-dim);
+            margin-top: 4px;
+            letter-spacing: 0.1em;
+        }
+
+        /* ══════════════════════════════════════════════
+           NEW: OS DETECTION SIDEBAR CARD
+           Hidden by default — shown only when OS scan
+           profile is selected and results return
+        ══════════════════════════════════════════════ */
+        #osCard {
+            display: none;
+        }
+
+        #osCard.visible {
+            display: block;
+        }
+
+        .os-name {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--neon-cyan);
+            line-height: 1.3;
+            margin-bottom: 6px;
+            word-break: break-word;
+        }
+
+        .os-accuracy {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            color: var(--text-dim);
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+        }
+
+        .os-accuracy span {
+            color: var(--neon-cyan);
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .os-detail-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            margin-bottom: 5px;
+        }
+
+        .os-detail-label {
+            color: var(--text-secondary);
+        }
+
+        .os-detail-val {
+            color: var(--text-primary);
+            font-weight: 600;
+            text-align: right;
+            max-width: 140px;
+            word-break: break-word;
+        }
+
+        .os-unknown-msg {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-dim);
+            line-height: 1.6;
+            padding: 8px 0;
+        }
+
+        .spinner {
+            width: 10px;
+            height: 10px;
+            border: 1.5px solid rgba(0, 255, 100, 0.2);
+            border-top-color: var(--neon-green);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .right-col {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 12px;
+            }
+
+            .input-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .btn-scan {
+                grid-column: 1/-1;
+            }
+
+            .vuln-grid {
+                grid-template-columns: 1fr;
+            }
+
+            #osCard {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 640px) {
+            h1 {
+                font-size: 16px;
+            }
+
+            .right-col {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .input-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .results-table {
+                font-size: 11px;
+            }
+
+            .results-table td,
+            .results-table th {
+                padding: 8px 10px;
+            }
+
+            .vuln-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .report-btns {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <header>
+            <div class="header-left">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2Z"
+                            stroke="#00ff64" stroke-width="1.5" stroke-linejoin="round" />
+                        <path d="M9 12l2 2 4-4" stroke="#00ff64" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </div>
+                <div class="header-titles">
+                    <div class="header-tag">INVAT v2.4.1 — Intelligent Network Vulnerability Assessment Tool</div>
+                    <h1>Network <span>Vulnerability</span> Scanner</h1>
+                    <div class="header-subtitle">Analyze &nbsp;·&nbsp; Detect &nbsp;·&nbsp; Secure</div>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span>SYSTEM ONLINE</span>
+                </div>
+                <div class="sys-time" id="sysTime">—</div>
+            </div>
+        </header>
+
+        <div class="main-grid">
+            <div class="left-col">
+
+                <!-- INPUT PANEL -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">Target Configuration</div>
+                        <span class="badge badge-green" id="readyBadge">READY</span>
+                    </div>
+
+                    <div class="disclaimer">
+                        <span style="font-size:13px">⚠</span>
+                        LEGAL NOTICE — Only scan systems you own or have explicit written permission to test.
+                    </div>
+
+                    <div class="input-grid">
+                        <div class="field-group">
+                            <label class="field-label" for="targetInput">Target IP / Domain</label>
+                            <input class="field-input" id="targetInput" type="text"
+                                placeholder="192.168.1.1 or example.com" autocomplete="off" spellcheck="false">
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label" for="scanType">Scan Profile</label>
+                            <select class="field-select" id="scanType">
+                                <option value="fast">Fast Scan (-F)</option>
+                                <option value="default" selected>Default Scan (-sV)</option>
+                                <option value="service">Service Detection (-sV -sC)</option>
+                                <option value="os">OS Detection (-O)</option>
+                                <option value="aggressive">Aggressive Scan (-A)</option>
+                            </select>
+                        </div>
+                        <button class="btn-scan" id="startBtn" onclick="startScan()">
+                            <span>▶ Start Scan</span>
+                        </button>
+                    </div>
+
+                    <div class="scan-status" id="scanStatus">
+                        <div class="status-row">
+                            <div class="status-text">
+                                <span class="spinner"></span>
+                                <span id="statusMsg">Connecting to backend...</span>
+                            </div>
+                            <span class="status-pct" id="statusPct">—</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="scan-log" id="scanLog">
+                            <span>[ SYS ] Scan engine initialised</span>
+                        </div>
+                    </div>
+
+                    <div class="error-banner" id="errorBanner">
+                        <span>⚠</span>
+                        <span id="errorMsg">An error occurred.</span>
+                    </div>
+                </div>
+
+                <!-- RESULTS TABLE -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">Port Scan Results</div>
+                        <span class="badge badge-red" id="portBadge">0 PORTS</span>
+                    </div>
+                    <div style="overflow-x:auto">
+                        <table class="results-table">
+                            <!--
+                                JS dynamically adds/removes the OS column header
+                                based on whether profile === 'os'
+                            -->
+                            <thead>
+                                <tr id="tableHead">
+                                    <th>Port</th>
+                                    <th>Service</th>
+                                    <th>State</th>
+                                    <th>Risk Level</th>
+                                    <th>Recommendation</th>
+                                    <!-- OS column inserted here by JS when needed -->
+                                </tr>
+                            </thead>
+                            <tbody id="resultsBody">
+                                <tr>
+                                    <td colspan="5">
+                                        <div class="empty-state">
+                                            <div class="empty-icon">◉</div>
+                                            <div class="empty-text">// Awaiting scan — results will appear here</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- VULNERABILITY CARDS -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">Detected Vulnerabilities</div>
+                        <span class="badge badge-red" id="vulnBadge">0 CVEs</span>
+                    </div>
+                    <div class="vuln-grid" id="vulnGrid">
+                        <div style="grid-column:1/-1">
+                            <div class="empty-state">
+                                <div class="empty-icon">⚠</div>
+                                <div class="empty-text">// No vulnerabilities found — run a scan first</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- REPORT PANEL -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">Report &amp; Export</div>
+                    </div>
+                    <div class="report-btns">
+                        <button class="btn-report primary" onclick="downloadReport()">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                            Download Report
+                        </button>
+                        <button class="btn-report" onclick="saveScan()">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+                                <polyline points="17 21 17 13 7 13 7 21" />
+                                <polyline points="7 3 7 8 15 8" />
+                            </svg>
+                            Save Scan
+                        </button>
+                        <button class="btn-report" onclick="clearAll()">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6l-1 14H6L5 6" />
+                                <path d="M10 11v6M14 11v6" />
+                            </svg>
+                            Clear
+                        </button>
+                    </div>
+                </div>
+
+            </div><!-- /left-col -->
+
+            <!-- RIGHT SIDEBAR -->
+            <div class="right-col">
+
+                <!-- Card A: Risk Score -->
+                <div class="stat-card">
+                    <div class="stat-label">Overall Risk Score</div>
+                    <div class="risk-score-wrap">
+                        <div class="risk-score" id="riskScore">—</div>
+                        <div class="risk-score-unit">/100</div>
+                    </div>
+                    <div class="risk-label" id="riskLabel">NOT SCANNED</div>
+                    <div class="risk-bar-track">
+                        <div class="risk-bar-fill" id="riskBar" style="width:0%"></div>
+                    </div>
+                </div>
+
+                <!-- Card B: Firewall -->
+                <div class="stat-card">
+                    <div class="stat-label">Firewall Detection</div>
+                    <div class="firewall-status">
+                        <div class="fw-icon" id="fwIcon">🔒</div>
+                        <div>
+                            <div class="fw-text" id="fwText" style="color:var(--text-dim)">—</div>
+                            <div class="fw-sub" id="fwSub">AWAITING SCAN</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card C: Port Summary -->
+                <div class="stat-card">
+                    <div class="stat-label">Port Summary</div>
+                    <div class="stat-value green" id="openPortsVal">—</div>
+                    <div class="stat-sub">OPEN PORTS</div>
+                    <div class="port-breakdown">
+                        <div class="port-row">
+                            <span class="port-row-label">Open</span>
+                            <span class="port-row-val green" id="pbOpen">0</span>
+                        </div>
+                        <div class="port-row">
+                            <span class="port-row-label">Filtered</span>
+                            <span class="port-row-val yellow" id="pbFiltered">0</span>
+                        </div>
+                        <div class="port-row">
+                            <span class="port-row-label">Closed</span>
+                            <span class="port-row-val dim" id="pbClosed">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card D: Scan Info -->
+                <div class="stat-card">
+                    <div class="stat-label">Scan Info</div>
+                    <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+                        <div class="port-row">
+                            <span class="port-row-label">Target</span>
+                            <span class="port-row-val"
+                                style="color:var(--neon-cyan);font-family:var(--font-mono);font-size:10px"
+                                id="infoTarget">—</span>
+                        </div>
+                        <div class="port-row">
+                            <span class="port-row-label">Profile</span>
+                            <span class="port-row-val" style="color:var(--text-secondary);font-size:10px"
+                                id="infoProfile">—</span>
+                        </div>
+                        <div class="port-row">
+                            <span class="port-row-label">Duration</span>
+                            <span class="port-row-val" style="color:var(--text-secondary);font-size:10px"
+                                id="infoDuration">—</span>
+                        </div>
+                        <div class="port-row">
+                            <span class="port-row-label">Status</span>
+                            <span class="port-row-val green" style="font-size:10px;font-family:var(--font-mono)"
+                                id="infoStatus">IDLE</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ══════════════════════════════════════════
+                     NEW CARD E: OS Detection Results
+                     Hidden by default.
+                     JS adds class .visible when OS scan completes.
+                ══════════════════════════════════════════ -->
+                <div class="stat-card" id="osCard">
+                    <div class="stat-label">OS Detection</div>
+                    <!-- JS writes OS info into this div -->
+                    <div id="osCardContent">
+                        <div class="os-unknown-msg">Run OS Detection scan to see results here.</div>
+                    </div>
+                </div>
+
+            </div><!-- /right-col -->
+        </div><!-- /main-grid -->
+    </div><!-- /container -->
+
+    <script>
+        'use strict';
+
+        const API_URL = window.location.origin + '/scan';
+        const SCAN_TIMEOUT_MS = 120_000;
+
+        const SCAN_PROFILES = {
+            fast: 'Fast Scan (-F)',
+            default: 'Default Scan (-sV)',
+            service: 'Service Detection (-sV -sC)',
+            os: 'OS Detection (-O)',
+            aggressive: 'Aggressive Scan (-A)',
+        };
+
+        const PORT_RISK_WEIGHT = { critical: 20, high: 12, medium: 6, low: 2 };
+
+        let lastScanData = null;
+        let elapsedTimer = null;
+        let logTimer = null;
+        let scanStartTime = null;
+
+        // ── Clock ──────────────────────────────────────────────────────────
+        function updateClock() {
+            document.getElementById('sysTime').textContent =
+                new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        // ── Input validation ───────────────────────────────────────────────
+        const RE_IPV4 = /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/;
+        const RE_DOMAIN = /^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$/;
+        const RE_INJECTION = /[;&|`$(){}[\]\\<>'"!#%^*+,=\s]/;
+
+        function validateTarget(raw) {
+            if (!raw || raw.length === 0) return 'Target cannot be empty.';
+            if (raw.length > 253) return 'Target too long (max 253 characters).';
+            if (RE_INJECTION.test(raw)) return 'Invalid characters detected — remove special characters.';
+            if (RE_IPV4.test(raw)) {
+                const octets = raw.split('/')[0].split('.');
+                if (octets.some(o => parseInt(o, 10) > 255))
+                    return 'Invalid IPv4 — octet value out of range (0–255).';
+                return null;
+            }
+            if (RE_DOMAIN.test(raw)) return null;
+            return 'Invalid target — enter a valid IPv4 address or domain name.';
+        }
+
+        // ── UI helpers ─────────────────────────────────────────────────────
+        function appendLog(msg) {
+            const log = document.getElementById('scanLog');
+            const sp = document.createElement('span');
+            sp.textContent = msg;
+            sp.className = 'new';
+            log.appendChild(sp);
+            while (log.children.length > 4) log.removeChild(log.firstChild);
+        }
+
+        function setProgress(pct) {
+            const v = Math.min(100, Math.max(0, pct));
+            document.getElementById('progressFill').style.width = v + '%';
+            document.getElementById('statusPct').textContent = v + '%';
+        }
+
+        function showError(msg) {
+            document.getElementById('errorMsg').textContent = msg;
+            document.getElementById('errorBanner').classList.add('active');
+        }
+
+        function hideError() {
+            document.getElementById('errorBanner').classList.remove('active');
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        //  TABLE HEADER — adds/removes OS column
+        // ══════════════════════════════════════════════════════════════════
+        function setTableColumns(showOS) {
+            const head = document.getElementById('tableHead');
+            // Remove existing OS th if present
+            const existing = head.querySelector('.os-th');
+            if (existing) existing.remove();
+
+            if (showOS) {
+                const th = document.createElement('th');
+                th.className = 'os-th';
+                th.textContent = 'OS';
+                head.appendChild(th);
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        //  OS SIDEBAR CARD — populate or hide
+        // ══════════════════════════════════════════════════════════════════
+        function updateOSCard(osInfo) {
+            const card = document.getElementById('osCard');
+            const content = document.getElementById('osCardContent');
+
+            if (!osInfo || !osInfo.name) {
+                // OS not detected
+                card.classList.add('visible');
+                content.innerHTML = `
+                    <div class="os-unknown-msg">
+                        OS could not be detected.<br>
+                        • Ensure you run as <strong>Administrator</strong><br>
+                        • Target may be blocking ICMP<br>
+                        • Try Aggressive scan for better results
+                    </div>`;
+                return;
+            }
+
+            card.classList.add('visible');
+            content.innerHTML = `
+                <div class="os-name">${esc(osInfo.name)}</div>
+                <div class="os-accuracy">MATCH ACCURACY: <span>${esc(String(osInfo.accuracy || '—'))}%</span></div>
+                ${osInfo.family ? `
+                <div class="os-detail-row">
+                    <span class="os-detail-label">Family</span>
+                    <span class="os-detail-val">${esc(osInfo.family)}</span>
+                </div>` : ''}
+                ${osInfo.generation ? `
+                <div class="os-detail-row">
+                    <span class="os-detail-label">Generation</span>
+                    <span class="os-detail-val">${esc(osInfo.generation)}</span>
+                </div>` : ''}
+                ${osInfo.type ? `
+                <div class="os-detail-row">
+                    <span class="os-detail-label">Type</span>
+                    <span class="os-detail-val">${esc(osInfo.type)}</span>
+                </div>` : ''}
+                ${osInfo.vendor ? `
+                <div class="os-detail-row">
+                    <span class="os-detail-label">Vendor</span>
+                    <span class="os-detail-val">${esc(osInfo.vendor)}</span>
+                </div>` : ''}`;
+        }
+
+        function hideOSCard() {
+            const card = document.getElementById('osCard');
+            card.classList.remove('visible');
+            document.getElementById('osCardContent').innerHTML =
+                '<div class="os-unknown-msg">Run OS Detection scan to see results here.</div>';
+        }
+
+        // ── setUIScanning ──────────────────────────────────────────────────
+        function setUIScanning(target, profile) {
+            hideError();
+            scanStartTime = Date.now();
+
+            const badge = document.getElementById('readyBadge');
+            badge.textContent = 'SCANNING';
+            badge.className = 'badge badge-yellow';
+
+            document.getElementById('infoTarget').textContent = target;
+            document.getElementById('infoProfile').textContent = SCAN_PROFILES[profile] || profile;
+            document.getElementById('infoStatus').textContent = 'SCANNING';
+            document.getElementById('infoStatus').style.color = 'var(--neon-yellow)';
+            document.getElementById('infoDuration').textContent = '0s';
+            document.getElementById('portBadge').textContent = '0 PORTS';
+            document.getElementById('vulnBadge').textContent = '0 CVEs';
+
+            document.getElementById('scanStatus').classList.add('active');
+
+            // Set table columns based on profile
+            const isOS = (profile === 'os');
+            setTableColumns(isOS);
+            const colSpan = isOS ? 6 : 5;
+
+            document.getElementById('resultsBody').innerHTML = `
+                <tr class="skeleton-row">
+                    <td><div class="skeleton-cell" style="width:60px"></div></td>
+                    <td><div class="skeleton-cell" style="width:140px"></div></td>
+                    <td><div class="skeleton-cell" style="width:70px"></div></td>
+                    <td><div class="skeleton-cell" style="width:80px"></div></td>
+                    <td><div class="skeleton-cell" style="width:160px"></div></td>
+                    ${isOS ? '<td><div class="skeleton-cell" style="width:100px"></div></td>' : ''}
+                </tr>
+                <tr class="skeleton-row">
+                    <td><div class="skeleton-cell" style="width:55px"></div></td>
+                    <td><div class="skeleton-cell" style="width:120px"></div></td>
+                    <td><div class="skeleton-cell" style="width:70px"></div></td>
+                    <td><div class="skeleton-cell" style="width:80px"></div></td>
+                    <td><div class="skeleton-cell" style="width:140px"></div></td>
+                    ${isOS ? '<td><div class="skeleton-cell" style="width:100px"></div></td>' : ''}
+                </tr>`;
+
+            document.getElementById('vulnGrid').innerHTML =
+                '<div style="grid-column:1/-1"><div class="empty-state"><div class="empty-text">// Waiting for backend response...</div></div></div>';
+
+            const btn = document.getElementById('startBtn');
+            btn.innerHTML = '<span>⏹ Scanning...</span>';
+            btn.disabled = true;
+
+            setProgress(15);
+            appendLog('[ SYS ] Request dispatched to backend');
+            document.getElementById('statusMsg').textContent = 'Connected — waiting for nmap...';
+
+            let currentPct = 15;
+            const CEILING = 88;
+
+            elapsedTimer = setInterval(() => {
+                const s = Math.floor((Date.now() - scanStartTime) / 1000);
+                document.getElementById('infoDuration').textContent = s + 's';
+            }, 1000);
+
+            const waitLogs = [
+                '[ NET ] Awaiting nmap results from backend...',
+                '[ SVC ] Backend fingerprinting services...',
+                '[ NSE ] Script engine running on backend...',
+                '[ CVE ] Cross-referencing vulnerability database...',
+                '[ OS  ] Running OS fingerprint analysis...',
+                '[ SYS ] Still running — OS scans take longer...',
+            ];
+            let logIdx = 0;
+
+            logTimer = setInterval(() => {
+                if (currentPct < CEILING) {
+                    const step = Math.max(0.3, (CEILING - currentPct) * 0.04);
+                    currentPct = Math.min(CEILING, currentPct + step);
+                    setProgress(Math.floor(currentPct));
+                }
+                appendLog(waitLogs[logIdx % waitLogs.length]);
+                logIdx++;
+                const elapsed = Math.floor((Date.now() - scanStartTime) / 1000);
+                document.getElementById('statusMsg').textContent =
+                    `Waiting for backend response (${elapsed}s elapsed)...`;
+            }, 3000);
+        }
+
+        function setUIComplete() {
+            clearInterval(elapsedTimer);
+            clearInterval(logTimer);
+            setProgress(100);
+            document.getElementById('scanStatus').classList.remove('active');
+
+            const elapsed = Math.floor((Date.now() - scanStartTime) / 1000);
+            document.getElementById('infoDuration').textContent = elapsed + 's';
+            document.getElementById('infoStatus').textContent = 'COMPLETE';
+            document.getElementById('infoStatus').style.color = 'var(--neon-green)';
+
+            const badge = document.getElementById('readyBadge');
+            badge.textContent = 'DONE';
+            badge.className = 'badge badge-green';
+
+            const btn = document.getElementById('startBtn');
+            btn.innerHTML = '<span>↺ Re-Scan</span>';
+            btn.disabled = false;
+        }
+
+        function setUIError(msg) {
+            clearInterval(elapsedTimer);
+            clearInterval(logTimer);
+            setProgress(0);
+            document.getElementById('scanStatus').classList.remove('active');
+            showError(msg);
+
+            const badge = document.getElementById('readyBadge');
+            badge.textContent = 'ERROR';
+            badge.className = 'badge badge-red';
+
+            document.getElementById('infoStatus').textContent = 'ERROR';
+            document.getElementById('infoStatus').style.color = 'var(--neon-red)';
+
+            const btn = document.getElementById('startBtn');
+            btn.innerHTML = '<span>▶ Start Scan</span>';
+            btn.disabled = false;
+        }
+
+        // ── startScan ──────────────────────────────────────────────────────
+        async function startScan() {
+            if (document.getElementById('startBtn').disabled) return;
+
+            const raw = document.getElementById('targetInput').value.trim();
+            const profile = document.getElementById('scanType').value;
+
+            const err = validateTarget(raw);
+            if (err) {
+                const inp = document.getElementById('targetInput');
+                inp.style.borderColor = 'var(--neon-red)';
+                inp.style.boxShadow = '0 0 0 2px rgba(255,45,85,0.2)';
+                showError('[ INPUT ] ' + err);
+                setTimeout(() => { inp.style.borderColor = ''; inp.style.boxShadow = ''; }, 2000);
+                return;
+            }
+
+            setUIScanning(raw, profile);
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), SCAN_TIMEOUT_MS);
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ target: raw, profile }),
+                    signal: controller.signal,
+                });
+
+                clearTimeout(timeoutId);
+
+                let data;
+                try { data = await response.json(); }
+                catch { throw new Error('Backend returned invalid JSON. Check server logs.'); }
+
+                if (!response.ok)
+                    throw new Error(data.error || `Server error: ${response.status}`);
+
+                if (!data || typeof data !== 'object')
+                    throw new Error('Unexpected response format from backend.');
+
+                data.ports = Array.isArray(data.ports) ? data.ports : [];
+                data.vulnerabilities = Array.isArray(data.vulnerabilities) ? data.vulnerabilities : [];
+
+                data = applyRiskFallback(data);
+                data = inferFirewall(data);
+
+                lastScanData = { ...data, target: raw, profile, timestamp: new Date().toUTCString() };
+                displayResults(data, profile);
+                setUIComplete();
+
+            } catch (e) {
+                clearTimeout(timeoutId);
+                let msg;
+                if (e.name === 'AbortError')
+                    msg = `[ TIMEOUT ] Scan exceeded ${SCAN_TIMEOUT_MS / 1000}s. Target may be unreachable.`;
+                else if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError'))
+                    msg = '[ CONN ] Cannot reach backend. Is your Python server running?';
+                else
+                    msg = '[ ERR ] ' + e.message;
+                setUIError(msg);
+            }
+        }
+
+        // ── Risk fallback ──────────────────────────────────────────────────
+        function applyRiskFallback(data) {
+            if (typeof data.risk_score === 'number' && data.risk_score > 0) return data;
+            let score = 0;
+            (data.ports || []).filter(p => p.state === 'open').forEach(p => {
+                score = Math.min(100, score + (PORT_RISK_WEIGHT[String(p.risk || 'low').toLowerCase()] ?? 2));
+            });
+            if ((data.ports || []).filter(p => p.state === 'open').length > 10) score = Math.min(100, score + 10);
+            data.risk_score = score;
+            data.risk_label = score >= 70 ? 'HIGH RISK' : score >= 40 ? 'MEDIUM RISK' : score > 0 ? 'LOW RISK' : 'MINIMAL RISK';
+            data._risk_source = 'client-fallback';
+            return data;
+        }
+
+        // ── Firewall inference ─────────────────────────────────────────────
+        function inferFirewall(data) {
+            const ports = data.ports || [];
+            const open = ports.filter(p => p.state === 'open').length;
+            const filtered = ports.filter(p => p.state === 'filtered').length;
+
+            if (data.firewall_detected === true) {
+                data._fw_label = 'Detected'; data._fw_sub = 'PACKET FILTERING ACTIVE'; data._fw_color = 'var(--neon-green)';
+            } else if (filtered > open && filtered > 0) {
+                data._fw_label = 'Likely Present'; data._fw_sub = 'HIGH FILTERED PORT RATIO'; data._fw_color = 'var(--neon-yellow)';
+                data.firewall_detected = true;
+            } else if (filtered > 0) {
+                data._fw_label = 'Possible'; data._fw_sub = 'SOME PORTS FILTERED'; data._fw_color = 'var(--neon-yellow)';
+            } else {
+                data._fw_label = 'Not Detected'; data._fw_sub = 'NO FILTERING OBSERVED'; data._fw_color = 'var(--neon-red)';
+            }
+            return data;
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        //  displayResults — populates all sections including OS
+        // ══════════════════════════════════════════════════════════════════
+        function displayResults(data, profile) {
+            const ports = data.ports || [];
+            const vulns = data.vulnerabilities || [];
+            const isOS = (profile === 'os');
+            const colSpan = isOS ? 6 : 5;
+
+            // Ensure correct column headers
+            setTableColumns(isOS);
+
+            // ── Results table ──────────────────────────────────────────────
+            const tbody = document.getElementById('resultsBody');
+            tbody.innerHTML = '';
+
+            if (ports.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${colSpan}">
+                    <div class="empty-state">
+                        <div class="empty-icon">◉</div>
+                        <div class="empty-text">// No ports found — host may be down or fully filtered</div>
+                    </div></td></tr>`;
+            } else {
+                // For OS scan, ALL rows share the same OS info (it's per-host not per-port)
+                const osName = (data.os_info && data.os_info.name) ? data.os_info.name : null;
+
+                ports.forEach((p, idx) => {
+                    const state = (p.state || 'closed').toLowerCase();
+                    const risk = (p.risk || 'low').toLowerCase();
+                    const row = document.createElement('tr');
+
+                    // OS cell — only first row spans all, rest are empty to avoid repetition
+                    let osCell = '';
+                    if (isOS) {
+                        if (idx === 0) {
+                            // First row: show OS name spanning all rows
+                            const osDisplay = osName
+                                ? `<span class="os-text">${esc(osName)}</span>`
+                                : `<span class="os-text unknown">Not Detected</span>`;
+                            osCell = `<td rowspan="${ports.length}"
+                                         style="vertical-align:top;padding-top:14px;
+                                                border-left:1px solid rgba(0,212,255,0.1)">
+                                         ${osDisplay}
+                                      </td>`;
+                        }
+                        // subsequent rows: no td (rowspan covers them)
+                    }
+
+                    row.innerHTML = `
+                        <td><span class="port-num">${esc(p.port)}</span></td>
+                        <td>
+                            <div class="service-name">${esc(p.service || 'unknown')}</div>
+                            <div class="service-sub">${esc(p.serviceInfo || '')}</div>
+                        </td>
+                        <td><span class="state-badge ${state}">${state}</span></td>
+                        <td><span class="risk-badge ${risk}">${risk}</span></td>
+                        <td><span class="rec-text">${esc(p.recommendation || '—')}</span></td>
+                        ${osCell}`;
+                    tbody.appendChild(row);
+                });
+            }
+
+            // ── Port counts ────────────────────────────────────────────────
+            const openCt = ports.filter(p => p.state === 'open').length;
+            const filteredCt = ports.filter(p => p.state === 'filtered').length;
+            const closedCt = ports.filter(p => p.state === 'closed').length;
+
+            document.getElementById('openPortsVal').textContent = openCt;
+            document.getElementById('pbOpen').textContent = openCt;
+            document.getElementById('pbFiltered').textContent = filteredCt;
+            document.getElementById('pbClosed').textContent = closedCt;
+            document.getElementById('portBadge').textContent = ports.length + ' PORTS';
+
+            // ── Risk score ─────────────────────────────────────────────────
+            const score = data.risk_score ?? 0;
+            const label = data.risk_label ?? 'UNKNOWN';
+            const scoreEl = document.getElementById('riskScore');
+
+            scoreEl.textContent = score;
+            let scoreColor, shadowColor;
+            if (score >= 70) { scoreColor = 'var(--neon-red)'; shadowColor = 'rgba(255,45,85,0.4)'; }
+            else if (score >= 40) { scoreColor = 'var(--neon-yellow)'; shadowColor = 'rgba(255,214,10,0.3)'; }
+            else { scoreColor = 'var(--neon-green)'; shadowColor = 'rgba(0,255,100,0.3)'; }
+
+            scoreEl.style.color = scoreColor;
+            scoreEl.style.textShadow = `0 0 30px ${shadowColor}`;
+            document.getElementById('riskLabel').textContent = label;
+            document.getElementById('riskLabel').style.color = scoreColor;
+            document.getElementById('riskBar').style.width = score + '%';
+
+            // ── Firewall ───────────────────────────────────────────────────
+            document.getElementById('fwText').textContent = data._fw_label || '—';
+            document.getElementById('fwText').style.color = data._fw_color || 'var(--text-dim)';
+            document.getElementById('fwSub').textContent = data._fw_sub || '';
+
+            // ── OS sidebar card ────────────────────────────────────────────
+            if (isOS) {
+                updateOSCard(data.os_info || null);
+            } else {
+                hideOSCard();
+            }
+
+            // ── Vulnerability cards ────────────────────────────────────────
+            const grid = document.getElementById('vulnGrid');
+            grid.innerHTML = '';
+
+            if (vulns.length === 0) {
+                grid.innerHTML = `<div style="grid-column:1/-1">
+                    <div class="empty-state">
+                        <div class="empty-icon">✓</div>
+                        <div class="empty-text">// No vulnerability signatures matched open ports</div>
+                    </div></div>`;
+            } else {
+                vulns.forEach(v => {
+                    const risk = String(v.risk || 'low').toLowerCase();
+                    const card = document.createElement('div');
+                    card.className = `vuln-card ${risk}`;
+                    card.innerHTML = `
+                        <div class="vuln-card-header">
+                            <div class="vuln-title">${esc(v.title)}</div>
+                            <span class="risk-badge ${risk}" style="font-size:9px;padding:2px 7px;white-space:nowrap">${risk}</span>
+                        </div>
+                        <div class="vuln-desc">${esc(v.desc || '')}</div>
+                        <div class="vuln-meta">
+                            <span class="vuln-cve">${esc(v.cve || 'INFO')}</span>
+                            <span>•</span>
+                            <span>Port-based detection</span>
+                        </div>`;
+                    grid.appendChild(card);
+                });
+            }
+
+            document.getElementById('vulnBadge').textContent = vulns.length + ' CVEs';
+        }
+
+        // ── Report builder ─────────────────────────────────────────────────
+        function buildReport(d) {
+            const HR = '═'.repeat(70);
+            const DIV = '─'.repeat(70);
+            const ports = d.ports || [];
+            const vulns = d.vulnerabilities || [];
+            const open = ports.filter(p => p.state === 'open').length;
+            const filtered = ports.filter(p => p.state === 'filtered').length;
+            const closed = ports.filter(p => p.state === 'closed').length;
+            const score = d.risk_score ?? 0;
+            const label = d.risk_label ?? 'UNKNOWN';
+            const profile = SCAN_PROFILES[d.profile] || d.profile;
+
+            const INTERPRET = {
+                'HIGH RISK': 'The target presents a HIGH attack surface. Immediate remediation required.',
+                'MEDIUM RISK': 'The target has a MODERATE risk posture. Harden services within 7 days.',
+                'LOW RISK': 'The target presents a LOW risk posture. Apply recommendations during maintenance.',
+                'MINIMAL RISK': 'The target appears well-hardened. Continue regular monitoring.',
+            };
+
+            const critCount = vulns.filter(v => v.risk === 'critical').length;
+            const highCount = vulns.filter(v => v.risk === 'high').length;
+            const medCount = vulns.filter(v => v.risk === 'medium').length;
+            const lowCount = vulns.filter(v => v.risk === 'low').length;
+
+            const remediations = vulns
+                .filter(v => v.risk === 'critical' || v.risk === 'high')
+                .map((v, i) => `  ${i + 1}. [${(v.risk || '').toUpperCase()}] ${v.title}\n     → ${v.desc ? v.desc.split('.')[0] + '.' : 'Review and patch.'}`);
+
+            const riskNote = d._risk_source === 'client-fallback'
+                ? '\n  NOTE: Score calculated client-side.' : '';
+
+            // OS section for report
+            const osLines = (d.profile === 'os' && d.os_info && d.os_info.name)
+                ? [
+                    '',
+                    '  OS DETECTION RESULTS',
+                    DIV,
+                    `  Detected OS  : ${d.os_info.name}`,
+                    `  Accuracy     : ${d.os_info.accuracy || '—'}%`,
+                    d.os_info.family ? `  Family       : ${d.os_info.family}` : '',
+                    d.os_info.generation ? `  Generation   : ${d.os_info.generation}` : '',
+                    d.os_info.type ? `  Type         : ${d.os_info.type}` : '',
+                    d.os_info.vendor ? `  Vendor       : ${d.os_info.vendor}` : '',
+                ].filter(Boolean)
+                : [];
+
+            return [
+                HR,
+                '  INVAT — NETWORK VULNERABILITY ASSESSMENT REPORT',
+                HR, '',
+                '  REPORT METADATA', DIV,
+                `  Generated : ${d.timestamp}`,
+                `  Target    : ${d.target}`,
+                `  Scan Type : ${profile}`,
+                `  Duration  : ${document.getElementById('infoDuration').textContent}`,
+                '',
+                '  EXECUTIVE SUMMARY', DIV,
+                `  Risk Score     : ${score}/100 — ${label}${riskNote}`,
+                `  Firewall       : ${d._fw_label || (d.firewall_detected ? 'Detected' : 'Not Detected')}`,
+                `  Ports Scanned  : ${ports.length} (Open: ${open} | Filtered: ${filtered} | Closed: ${closed})`,
+                `  Vulnerabilities: ${vulns.length} (Critical: ${critCount} High: ${highCount} Medium: ${medCount} Low: ${lowCount})`,
+                ...osLines,
+                '',
+                '  RISK INTERPRETATION', DIV,
+                '  ' + (INTERPRET[label] || 'Risk level could not be determined conclusively.'),
+                '',
+                '  PORT SCAN RESULTS', DIV,
+                `  ${'PORT'.padEnd(14)}${'SERVICE'.padEnd(28)}${'STATE'.padEnd(12)}${'RISK'.padEnd(12)}RECOMMENDATION`,
+                '  ' + '─'.repeat(68),
+                ...ports.map(p =>
+                    `  ${String(p.port || '').padEnd(14)}${String(p.service || '').padEnd(28)}` +
+                    `${String(p.state || '').toUpperCase().padEnd(12)}${String(p.risk || '').toUpperCase().padEnd(12)}${p.recommendation || '—'}`
+                ),
+                '',
+                '  VULNERABILITY DETAILS', DIV,
+                ...(vulns.length === 0
+                    ? ['  No vulnerabilities matched.']
+                    : vulns.flatMap(v => [
+                        `  [${(v.risk || '').toUpperCase()}] ${v.title}`,
+                        `  Reference : ${v.cve || 'N/A'}`,
+                        `  Detail    : ${v.desc || 'N/A'}`,
+                        '',
+                    ])
+                ),
+                '  REMEDIATION CHECKLIST', DIV,
+                ...(remediations.length === 0 ? ['  No critical or high findings.'] : remediations),
+                '',
+                '  GENERAL RECOMMENDATIONS', DIV,
+                '  1. Apply all OS and application patches immediately.',
+                '  2. Restrict database ports to localhost or VPN.',
+                '  3. Replace Telnet/FTP with SSH/SFTP.',
+                '  4. Enable host-based firewall.',
+                '  5. Repeat scans monthly.',
+                '',
+                HR,
+                '  DISCLAIMER', DIV,
+                '  Only scan systems you own or have explicit written permission to test.',
+                HR, '',
+            ].join('\n');
+        }
+
+        function downloadReport() {
+            if (!lastScanData) { alert('Run a scan first.'); return; }
+            const content = buildReport(lastScanData);
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `INVAT_${(lastScanData.target || 'scan').replace(/[^a-z0-9]/gi, '_')}_${Date.now()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+        }
+
+        function saveScan() {
+            if (!lastScanData) { alert('Run a scan first.'); return; }
+            try {
+                const key = 'invat_' + Date.now();
+                sessionStorage.setItem(key, JSON.stringify({ ...lastScanData, _savedAt: new Date().toISOString() }));
+                alert(`Scan saved.\nKey: ${key}\nTarget: ${lastScanData.target}`);
+            } catch { alert('Session storage unavailable. Use Download Report instead.'); }
+        }
+
+        function clearAll() {
+            lastScanData = null;
+            clearInterval(elapsedTimer);
+            clearInterval(logTimer);
+
+            document.getElementById('targetInput').value = '';
+            document.getElementById('resultsBody').innerHTML = `<tr><td colspan="5">
+                <div class="empty-state"><div class="empty-icon">◉</div>
+                <div class="empty-text">// Awaiting scan — results will appear here</div>
+                </div></td></tr>`;
+            document.getElementById('vulnGrid').innerHTML = `<div style="grid-column:1/-1">
+                <div class="empty-state"><div class="empty-icon">⚠</div>
+                <div class="empty-text">// No vulnerabilities found — run a scan first</div>
+                </div></div>`;
+
+            ['riskScore', 'riskLabel', 'openPortsVal', 'infoTarget', 'infoProfile', 'infoDuration']
+                .forEach(id => { document.getElementById(id).textContent = '—'; });
+
+            document.getElementById('riskScore').style.color = 'var(--neon-yellow)';
+            document.getElementById('riskScore').style.textShadow = '';
+            document.getElementById('riskLabel').style.color = '';
+            document.getElementById('riskBar').style.width = '0%';
+            document.getElementById('fwText').textContent = '—';
+            document.getElementById('fwText').style.color = 'var(--text-dim)';
+            document.getElementById('fwSub').textContent = 'AWAITING SCAN';
+            document.getElementById('pbOpen').textContent = '0';
+            document.getElementById('pbFiltered').textContent = '0';
+            document.getElementById('pbClosed').textContent = '0';
+            document.getElementById('portBadge').textContent = '0 PORTS';
+            document.getElementById('vulnBadge').textContent = '0 CVEs';
+            document.getElementById('infoStatus').textContent = 'IDLE';
+            document.getElementById('infoStatus').style.color = '';
+            document.getElementById('readyBadge').textContent = 'READY';
+            document.getElementById('readyBadge').className = 'badge badge-green';
+            document.getElementById('scanStatus').classList.remove('active');
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('statusPct').textContent = '—';
+
+            // Reset OS column and card
+            setTableColumns(false);
+            hideOSCard();
+            hideError();
+
+            const btn = document.getElementById('startBtn');
+            btn.innerHTML = '<span>▶ Start Scan</span>';
+            btn.disabled = false;
+        }
+
+        function esc(str) {
+            return String(str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+    </script>
+</body>
+
+</html>
